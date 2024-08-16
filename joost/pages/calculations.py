@@ -13,9 +13,8 @@ def show_stock_selector():
     if st.button("Submit"):
         st.write("Thank you for providing informations.")
         data = yf.download(ticker, start=date1, end=date2)
-        data['Close'].plot()
+        plt = data['Close'].plot()
         plt.title("Apple Stock Prices")
-        plt.grid(True)
         st.pyplot(plt)
 
 import streamlit as st
