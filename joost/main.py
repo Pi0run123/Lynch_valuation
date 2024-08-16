@@ -1,0 +1,32 @@
+import streamlit as st
+
+about_calc = st.Page(
+    page = "pages/about_calc.py",
+    title = "About Formula",
+    default=True
+)
+
+about_me = st.Page(
+    page = "pages/about_me.py",
+    title = "About Author"
+)
+
+calculations = st.Page(
+    page = "pages/calculations.py",
+    title = "Lynch Formula"
+)
+
+peter_lynch_page = st.Page(
+    page = "pages/peter_lynch.py",
+    title = "Story of Peter Lynch"
+)
+
+pg = st.navigation(
+    {
+        "Info": [about_calc],
+        "Projects": [calculations, peter_lynch_page],
+        "Creator": [about_me]
+    }
+)
+
+pg.run()
