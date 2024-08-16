@@ -5,7 +5,7 @@ st.title("Who is Peter Lynch?")
 col1, col2 = st.columns(2, gap="small", vertical_alignment="center")
 
 with col1:
-    st.image("./assets/peter_lynch.png", width=300)
+    st.image("peter_lynch.png",caption="Peter Lynch during Fidelity Magellan Fund rule",width=300)
 
 with col2:
     st.write(
