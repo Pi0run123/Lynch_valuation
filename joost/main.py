@@ -1,5 +1,8 @@
 import streamlit as st
 
+IS_DARK_THEME = True
+
+
 about_calc = st.Page(
     page = "pages/about_calc.py",
     title = "About Formula",
