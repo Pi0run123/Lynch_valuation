@@ -30,14 +30,13 @@ def show_lynch_formula():
     if ticker:
         data = yf.Ticker(ticker)
         current_price = data.history(period='1d')['Close'][0]
-        earnings_growth_rate = data.info['earningsYearlyGrowth']
         earnings = data.info['forwardEps']
         price_to_earnings = data.info['trailingPE']       
         peg_ratio = data.info['pegRatio']
         st.write(f"Lynch Formula for {ticker} is {peg_ratio}")
         st.write(f"Current price: {current_price:.2f}")
         st.write(f"Price-to-earnings ratio (PE): {price_to_earnings:.2f}")
-        st.write(f"Earnings growth rate (G): {earnings_growth_rate:.2f}%")
+        st.write(f"Earnings : {earnings:.2f}%")
         st.write(f"PEG ratio: {peg_ratio:.2f}")
         
         if peg_ratio == 1:
