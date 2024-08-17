@@ -1,6 +1,5 @@
 import streamlit as st
 import yfinance as yf
-import matplotlib.pyplot as plt
 
 st.title("Calculation of Lynch Formula")
 
@@ -16,9 +15,6 @@ def show_stock_selector():
         plt = data['Close'].plot()
         plt.title("Apple Stock Prices")
         st.pyplot(plt)
-
-import streamlit as st
-import yfinance as yf
 
 @st.dialog("Calculate Lynch Formula")
 def show_lynch_formula():
