@@ -12,10 +12,12 @@ def show_stock_selector():
     
     if st.button("Submit"):
         st.write("Thank you for providing the information.")
+        index = yf.download("^GSPC", start=date1, end=date2)
         data = yf.download(ticker, start=date1, end=date2)
         fig, ax = plt.subplots()
         ax.plot(data['Close'])
-        ax.set_title(f"{ticker} Stock Prices")
+        ax.plot(index['Close'])
+        ax.set_title(f"{ticker} Stock Prices compared to S&P 500 Index")
         ax.set_xlabel("Date")
         ax.set_ylabel("Close Price")
         
