@@ -1,6 +1,6 @@
 import streamlit as st
 import yfinance as yf
-
+import matplotlib.pyplot as plt
 st.title("Calculation of Lynch Formula")
 
 @st.dialog("Show the chart")
@@ -9,13 +9,17 @@ def show_stock_selector():
     ticker = st.text_input("Ticker")
     date1 = st.date_input("Start date")
     date2 = st.date_input("End date")
+    
     if st.button("Submit"):
-        st.write("Thank you for providing informations.")
+        st.write("Thank you for providing the information.")
         data = yf.download(ticker, start=date1, end=date2)
-        plt = data['Close'].plot()
-        plt.title("Apple Stock Prices")
-        st.pyplot(plt)
-
+        fig, ax = plt.subplots()
+        ax.plot(data['Close'])
+        ax.set_title(f"{ticker} Stock Prices")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Close Price")
+        
+        st.pyplot(fig)
 @st.dialog("Calculate Lynch Formula")
 def show_lynch_formula():
     st.write("Provide information to calculate the Lynch Formula")
