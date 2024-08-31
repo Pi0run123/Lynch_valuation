@@ -6,6 +6,7 @@ st.title("Calculation of Lynch Formula")
 
 st.write("Provide information to show the chart")
 
+#to change
 def show_stock_selector():
     ticker = st.text_input("Ticker")
     date1 = st.date_input("Start date")
