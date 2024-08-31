@@ -1,4 +1,4 @@
 streamlit
 yfinance
 matplotlib
-plotly
+plotly.graph_objs
