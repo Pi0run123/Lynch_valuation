@@ -1,10 +1,8 @@
-# Description: This script contains the code to show a dialog box to insert stock information and show the stock price chart.
 import plotly.express as px
 import streamlit as st
 import yfinance as yf
 
-
-# def show_stock_selector():
+st.title("Stock Chart")
 st.write("Provide information to show the chart")
 
 ticker = st.text_input("Ticker (e.g., AAPL)")
@@ -27,5 +25,5 @@ if st.button("Submit"):
                 fig = px.line(data, x=data.index, y='Close', title=f"{ticker} Stock Price")
                 st.plotly_chart(fig)
         except Exception as e:
-            st.error(f"An error occurred: {e}")
-
+            st.error(f"An error occurred: {str(e)}")
+            st.error("Please check your internet connection and try again.")
