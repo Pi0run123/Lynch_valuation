@@ -21,7 +21,7 @@ def show_stock_selector():
         else:
             try:
                 st.write("Fetching data...")
-                data = yf.download(ticker, start=date1, end=date2)
+                data = yf.download(ticker, start=date1, end=date2, progress=False)
                 
                 if data.empty:
                     st.error(f"No data found for ticker symbol {ticker} within the given date range.")
