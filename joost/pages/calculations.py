@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 
+IS_DARK_THEME = True
 
 st.title("Calculation of Lynch Formula")
 def show_lynch_formula():

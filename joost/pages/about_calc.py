@@ -1,5 +1,7 @@
 import streamlit as st
 
+IS_DARK_THEME = True
+
 st.title("Peter Lynch's 25 Golden Investment Rules")
 
 # col1, col2 = st.columns(2, gap="small", vertical_alignment="center")

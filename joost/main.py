@@ -2,15 +2,6 @@ import streamlit as st
 
 IS_DARK_THEME = True
 
-st.markdown("""
-    <style>
-        .css-1d391kg { /* Adjust the selector as needed */
-            padding-top: 100px; /* Adjust the height */
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-
 about_calc = st.Page(
     page = "pages/about_calc.py",
     title = "About Formula",

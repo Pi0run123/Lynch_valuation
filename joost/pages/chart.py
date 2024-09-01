@@ -2,6 +2,8 @@ import plotly.express as px
 import streamlit as st
 import yfinance as yf
 
+IS_DARK_THEME = True
+
 st.title("Stock Chart")
 st.write("Provide information to show the chart")
 
@@ -24,6 +26,9 @@ if st.button("Submit"):
             else:
                 fig = px.line(data, x=data.index, y='Close', title=f"{ticker} Stock Price")
                 st.plotly_chart(fig)
+        except ConnectionError:
+            st.error("Failed to connect to the data source. Please check your internet connection.")
+        except TimeoutError:
+            st.error("The request timed out. Try again later.")
         except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
-            st.error("Please check your internet connection and try again.")
+            st.error(f"An unexpected error occurred: {str(e)}")

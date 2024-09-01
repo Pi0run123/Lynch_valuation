@@ -1,5 +1,7 @@
 import streamlit as st
 
+IS_DARK_THEME = True
+
 st.title("Who is Peter Lynch?")
 
 col1, col2 = st.columns(2, gap="small", vertical_alignment="center")
