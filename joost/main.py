@@ -2,6 +2,14 @@ import streamlit as st
 
 IS_DARK_THEME = True
 
+st.markdown("""
+    <style>
+        .css-1d391kg { /* Adjust the selector as needed */
+            padding-top: 100px; /* Adjust the height */
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 about_calc = st.Page(
     page = "pages/about_calc.py",
@@ -29,13 +37,12 @@ chart = st.Page(
     title = "Stock Chart"
 )
 
-with st.beta_expander("Navigation", expanded=True):
-    pg = st.navigation(
-        {
-            "Info": [about_calc],
-            "Projects": [calculations, peter_lynch_page, chart],
-            "Creator": [about_me]
-        }
-    )
-    
+pg = st.navigation(
+    {
+        "Info": [about_calc],
+        "Projects": [calculations, peter_lynch_page, chart],
+        "Creator": [about_me]
+    }
+)
+
 pg.run()
