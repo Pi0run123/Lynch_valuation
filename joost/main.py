@@ -24,10 +24,15 @@ peter_lynch_page = st.Page(
     title = "Story of Peter Lynch"
 )
 
+chart = st.Page(
+    page = "pages/chart.py",
+    title = "Stock Chart"
+)
+
 pg = st.navigation(
     {
         "Info": [about_calc],
-        "Projects": [calculations, peter_lynch_page],
+        "Projects": [calculations, peter_lynch_page, chart],
         "Creator": [about_me]
     }
 )
