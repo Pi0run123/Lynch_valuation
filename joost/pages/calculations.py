@@ -1,34 +1,22 @@
 import streamlit as st
 import yfinance as yf
-import plotly.graph_objs as go
+import matplotlib.pyplot as plt
+import plotly.express as px
 
 st.title("Calculation of Lynch Formula")
 
-st.write("Provide information to show the chart")
-
-#to change
+@st.dialog("Show the chart")
 def show_stock_selector():
+    st.write("Provide information to show chart")
     ticker = st.text_input("Ticker")
     date1 = st.date_input("Start date")
     date2 = st.date_input("End date")
-
+    
     if st.button("Submit"):
         st.write("Thank you for providing the information.")
-
-        index = yf.download("^GSPC", start=date1, end=date2)
         data = yf.download(ticker, start=date1, end=date2)
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name=f'{ticker} Stock'))
-        fig.add_trace(go.Scatter(x=index.index, y=index['Close'], mode='lines', name='S&P 500 Index'))
-
-        fig.update_layout(
-            title=f"{ticker} Stock Prices Compared to S&P 500 Index",
-            xaxis_title="Date",
-            yaxis_title="Close Price",
-            legend_title="Legend",
-        )
+        fig = px.line(data, x=data.index, y='Close', title=f"{ticker} Stock Price")
         st.plotly_chart(fig)
-
 @st.dialog("Calculate Lynch Formula")
 def show_lynch_formula():
     st.write("Provide information to calculate the Lynch Formula")
