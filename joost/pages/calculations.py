@@ -1,6 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 st.title("Calculation of Lynch Formula")
 
@@ -14,13 +15,8 @@ def show_stock_selector():
     if st.button("Submit"):
         st.write("Thank you for providing the information.")
         data = yf.download(ticker, start=date1, end=date2)
-        fig, ax = plt.subplots()
-        ax.plot(data['Close'])
-        ax.set_title(f"{ticker} Stock Prices")
-        ax.set_xlabel("Date")
-        ax.set_ylabel("Close Price")
-        
-        st.pyplot(fig)
+        fig = px.line(data, x=data.index, y='Close', title=f"{ticker} Stock Price")
+        st.plotly_chart(fig)
 @st.dialog("Calculate Lynch Formula")
 def show_lynch_formula():
     st.write("Provide information to calculate the Lynch Formula")
