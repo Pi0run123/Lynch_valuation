@@ -29,12 +29,13 @@ chart = st.Page(
     title = "Stock Chart"
 )
 
-pg = st.navigation(
-    {
-        "Info": [about_calc],
-        "Projects": [calculations, peter_lynch_page, chart],
-        "Creator": [about_me]
-    }
-)
-
+with st.beta_expander("Navigation", expanded=True):
+    pg = st.navigation(
+        {
+            "Info": [about_calc],
+            "Projects": [calculations, peter_lynch_page, chart],
+            "Creator": [about_me]
+        }
+    )
+    
 pg.run()
