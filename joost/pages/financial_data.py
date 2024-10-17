@@ -2,6 +2,8 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 
+
+ticker = st.text_input("Ticker (e.g., AAPL, MSFT) should be comma separated")
 def get_financials(ticker):
     stock = yf.Ticker(ticker)
     financials = stock.financials.T
