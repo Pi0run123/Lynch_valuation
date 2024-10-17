@@ -3,36 +3,34 @@ import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Function to format numbers with thousands separators
+def format_number(num):
+    return f"{num:,.0f}".replace(',', '.').replace('.', ',', 1)
+
+# Fetch quarterly financial data for a stock
 def get_financials(ticker):
     stock = yf.Ticker(ticker)
     financials = stock.quarterly_financials.T
 
+    # Specify financial metrics to retrieve
     metrics = {
         "Revenue": "Total Revenue",
         "COGS": "Cost Of Revenue",
-        "EBIT": "Ebit",
         "Net Income": "Net Income",
-        "R&D": "Research Development",
-        "S&GA": "Selling General Administrative Expense"
     }
 
+    # Collect the specified metrics
     filtered_data = {metric: financials.get(column, [f"Metric '{column}' not found"] * len(financials.index))
                      for metric, column in metrics.items()}
 
-    if "Ebit" in financials.columns and "Depreciation" in stock.cashflow.columns:
-        if len(financials["Ebit"]) == len(stock.cashflow.loc["Depreciation"]):
-            filtered_data["EBITDA"] = financials["Ebit"] + stock.cashflow.loc["Depreciation"]
-        else:
-            filtered_data["EBITDA"] = [f"EBITDA calculation error (length mismatch)"] * len(financials.index)
-    else:
-        filtered_data["EBITDA"] = [f"EBITDA could not be calculated"] * len(financials.index)
-
     return pd.DataFrame(filtered_data)
 
+# Get P/E Ratio for a stock
 def get_valuation_metrics(ticker):
     stock = yf.Ticker(ticker)
     return {"P/E Ratio": stock.info.get("forwardPE", None)}
 
+# Fetch financials and valuations for multiple tickers
 def get_financials_for_multiple(tickers):
     ticker_list = [t.strip().upper() for t in tickers.split(',')]
     combined_financials, combined_valuations = {}, {}
@@ -50,7 +48,7 @@ def get_financials_for_multiple(tickers):
 # Plot financial data over time
 def plot_financials(financials, ticker):
     plt.figure(figsize=(10, 6))
-    for metric in ["Revenue", "EBITDA", "EBIT"]:
+    for metric in ["Revenue", "COGS", "Net Income"]:
         if metric in financials.columns:
             plt.plot(financials.index, financials[metric], label=metric, marker="o")
 
@@ -59,6 +57,9 @@ def plot_financials(financials, ticker):
     plt.ylabel("Value (in billions)")
     plt.xticks(rotation=45)
     plt.legend()
+    
+    # Format y-axis to show numbers with thousands separator
+    plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: format_number(x)))
     st.pyplot(plt)
 
 # Main page for financial dashboard
@@ -67,7 +68,7 @@ def p_and_l_page():
     st.write("""
     Use this page to fetch key financial metrics (P&L) and valuation ratios for selected stocks using Yahoo Finance (yFinance).
     The following metrics will be extracted:
-    - **P&L Metrics**: Revenue, COGS, EBITDA, EBIT, Net Income, R&D, S&GA
+    - **P&L Metrics**: Revenue, COGS, Net Income
     - **Valuation Metrics**: P/E Ratio
     """)
 
@@ -83,12 +84,18 @@ def p_and_l_page():
                     st.error(f"{ticker}: {data}")
                 else:
                     st.subheader(f"Quarterly Profit & Loss Statement for {ticker}")
-                    st.dataframe(data.style.format(precision=2, na_rep='N/A').set_properties(
+
+                    # Format the DataFrame for display
+                    formatted_data = data.applymap(lambda x: format_number(x) if isinstance(x, (int, float)) else x)
+                    
+                    st.dataframe(formatted_data.style.set_properties(
                         **{'background-color': 'lightcyan', 'color': 'black', 'border-color': 'gray', 'font-size': '14px'}
                     ))
 
                     st.subheader(f"Valuation Metrics for {ticker}")
                     valuation_df = pd.DataFrame(valuations[ticker], index=[ticker])
+                    # Format valuation metrics
+                    valuation_df = valuation_df.applymap(lambda x: format_number(x) if isinstance(x, (int, float)) else x)
                     st.table(valuation_df)
 
                     if st.button(f"Visualize {ticker} Financials Over Time", key=f"visualize_{ticker}"):
