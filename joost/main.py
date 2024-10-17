@@ -28,10 +28,16 @@ chart = st.Page(
     title = "Stock Chart"
 )
 
+financial_data = st.Page(
+    page = "pages/financia_data.py",
+    title = "Profit & Loss"
+)
+
 pg = st.navigation(
     {
         "Info": [about_calc],
-        "Projects": [calculations, peter_lynch_page, chart],
+        "Lynch calc": [calculations, peter_lynch_page],
+        "Analysis projects": [chart, financial_data],
         "Creator": [about_me]
     }
 )
