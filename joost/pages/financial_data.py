@@ -1,7 +1,7 @@
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 # Function to format numbers with thousands separators
 def format_number(num):
@@ -45,22 +45,19 @@ def get_financials_for_multiple(tickers):
 
     return combined_financials, combined_valuations
 
-# Plot financial data over time
+# Plot financial data over time using Plotly
 def plot_financials(financials, ticker):
-    plt.figure(figsize=(10, 6))
-    for metric in ["Revenue", "COGS", "Net Income"]:
-        if metric in financials.columns:
-            plt.plot(financials.index, financials[metric], label=metric, marker="o")
-
-    plt.title(f"Quarterly Financial Data for {ticker}")
-    plt.xlabel("Quarter")
-    plt.ylabel("Value (in billions)")
-    plt.xticks(rotation=45)
-    plt.legend()
+    financials = financials.reset_index()  # Ensure index is a column for Plotly
+    fig = px.line(financials, x='index', y=['Revenue', 'COGS', 'Net Income'], markers=True,
+                  labels={
+                      'index': 'Quarter',
+                      'value': 'Value (in billions)',
+                      'variable': 'Metrics'
+                  },
+                  title=f"Quarterly Financial Data for {ticker}")
     
-    # Format y-axis to show numbers with thousands separator
-    plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: format_number(x)))
-    st.pyplot(plt)
+    fig.update_layout(xaxis_tickangle=-45)  # Rotate x-axis labels for better readability
+    st.plotly_chart(fig)
 
 # Main page for financial dashboard
 def p_and_l_page():
@@ -102,10 +99,8 @@ def p_and_l_page():
                         st.session_state['selected_ticker'] = ticker
                         st.session_state['plot_data'] = data
 
-    # Visualization section
     if 'plot_data' in st.session_state:
         st.subheader(f"Visualization for {st.session_state['selected_ticker']}")
         plot_financials(st.session_state['plot_data'], st.session_state['selected_ticker'])
 
-# Run the application
 p_and_l_page()
