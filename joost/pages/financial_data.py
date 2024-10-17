@@ -3,104 +3,92 @@ import yfinance as yf
 import pandas as pd
 import plotly.express as px
 
-# Function to format numbers with thousands separators
+# Format numbers with thousand separators
 def format_number(num):
     return f"{num:,.0f}".replace(',', '.').replace('.', ',', 1)
 
-# Fetch quarterly financial data for a stock
-def get_financials(ticker):
-    stock = yf.Ticker(ticker)
-    financials = stock.quarterly_financials.T
+# Main page for financial dashboard
+st.title("Quarterly Financial P&L and Valuation Dashboard")
+st.write("""
+Use this page to fetch key financial metrics (P&L) and valuation ratios for selected stocks using Yahoo Finance (yFinance).
+The following metrics will be extracted:
+- **P&L Metrics**: Revenue, COGS, Net Income
+- **Valuation Metrics**: P/E Ratio
+""")
 
-    # Specify financial metrics to retrieve
-    metrics = {
-        "Revenue": "Total Revenue",
-        "COGS": "Cost Of Revenue",
-        "Net Income": "Net Income",
-    }
+ticker_input = st.text_input("Enter stock ticker symbols (comma-separated, e.g., AAPL, MSFT):", "AAPL")
 
-    # Collect the specified metrics
-    filtered_data = {metric: financials.get(column, [f"Metric '{column}' not found"] * len(financials.index))
-                     for metric, column in metrics.items()}
+# Fetch the data when the button is clicked
+if st.button("Get Data"):
+    tickers = [t.strip().upper() for t in ticker_input.split(',')]
+    combined_financials = {}
+    combined_valuations = {}
 
-    return pd.DataFrame(filtered_data)
-
-# Get P/E Ratio for a stock
-def get_valuation_metrics(ticker):
-    stock = yf.Ticker(ticker)
-    return {"P/E Ratio": stock.info.get("forwardPE", None)}
-
-# Fetch financials and valuations for multiple tickers
-def get_financials_for_multiple(tickers):
-    ticker_list = [t.strip().upper() for t in tickers.split(',')]
-    combined_financials, combined_valuations = {}, {}
-
-    for ticker in ticker_list:
+    # Loop through each ticker and fetch financials and valuations
+    for ticker in tickers:
         try:
-            combined_financials[ticker] = get_financials(ticker)
-            combined_valuations[ticker] = get_valuation_metrics(ticker)
+            stock = yf.Ticker(ticker)
+            financials = stock.quarterly_financials.T
+            
+            # Collect specified financial metrics
+            filtered_data = pd.DataFrame({
+                "Revenue": financials.get("Total Revenue", [f"Metric not found"] * len(financials.index)),
+                "COGS": financials.get("Cost Of Revenue", [f"Metric not found"] * len(financials.index)),
+                "Net Income": financials.get("Net Income", [f"Metric not found"] * len(financials.index))
+            })
+
+            combined_financials[ticker] = filtered_data
+
+            # Get the valuation metric
+            pe_ratio = stock.info.get("forwardPE", None)
+            combined_valuations[ticker] = {"P/E Ratio": pe_ratio}
+
         except Exception as e:
             combined_financials[ticker] = f"Error fetching data: {e}"
             combined_valuations[ticker] = f"Error fetching data: {e}"
 
-    return combined_financials, combined_valuations
+    # Save the data into session state to persist after button clicks
+    st.session_state['financial_data'] = combined_financials
+    st.session_state['valuation_data'] = combined_valuations
 
-# Plot financial data over time using Plotly
-def plot_financials(financials, ticker):
-    financials = financials.reset_index()  # Ensure index is a column for Plotly
-    fig = px.line(financials, x='index', y=['Revenue', 'COGS', 'Net Income'], markers=True,
-                  labels={
-                      'index': 'Quarter',
-                      'value': 'Value (in billions)',
-                      'variable': 'Metrics'
-                  },
-                  title=f"Quarterly Financial Data for {ticker}")
-    
-    fig.update_layout(xaxis_tickangle=-45)  # Rotate x-axis labels for better readability
+# Display the financial data if it's available
+if 'financial_data' in st.session_state:
+    financials = st.session_state['financial_data']
+    valuations = st.session_state['valuation_data']
+
+    for ticker, data in financials.items():
+        if isinstance(data, str):
+            st.error(f"{ticker}: {data}")
+        else:
+            st.subheader(f"Quarterly Profit & Loss Statement for {ticker}")
+            
+            # Format the data for better display
+            formatted_data = data.applymap(lambda x: format_number(x) if isinstance(x, (int, float)) else x)
+            st.dataframe(formatted_data.style.set_properties(
+                {'background-color': 'lightcyan', 'color': 'black', 'border-color': 'gray', 'font-size': '14px'}
+            ))
+
+            st.subheader(f"Valuation Metrics for {ticker}")
+            valuation_df = pd.DataFrame(valuations[ticker], index=[ticker])
+            valuation_df = valuation_df.applymap(lambda x: format_number(x) if isinstance(x, (int, float)) else x)
+            st.table(valuation_df)
+
+            # Visualize financials for each ticker
+            if st.button(f"Visualize {ticker} Financials Over Time", key=f"visualize_{ticker}"):
+                st.session_state['selected_ticker'] = ticker
+                st.session_state['plot_data'] = data
+
+# Display the plot if the data exists in session state
+if 'plot_data' in st.session_state:
+    selected_ticker = st.session_state['selected_ticker']
+    plot_data = st.session_state['plot_data'].reset_index()
+
+    st.subheader(f"Visualization for {selected_ticker}")
+
+    # Plot the data using Plotly
+    fig = px.line(plot_data, x='index', y=['Revenue', 'COGS', 'Net Income'], markers=True,
+                  labels={'index': 'Quarter', 'value': 'Value (in billions)', 'variable': 'Metrics'},
+                  title=f"Quarterly Financial Data for {selected_ticker}")
+
+    fig.update_layout(xaxis_tickangle=-45)  # Rotate x-axis labels
     st.plotly_chart(fig)
-
-# Main page for financial dashboard
-def p_and_l_page():
-    st.title("Quarterly Financial P&L and Valuation Dashboard")
-    st.write("""
-    Use this page to fetch key financial metrics (P&L) and valuation ratios for selected stocks using Yahoo Finance (yFinance).
-    The following metrics will be extracted:
-    - **P&L Metrics**: Revenue, COGS, Net Income
-    - **Valuation Metrics**: P/E Ratio
-    """)
-
-    ticker_input = st.text_input("Enter stock ticker symbols (comma-separated, e.g., AAPL, MSFT):", "AAPL")
-
-    if st.button("Get Data"):
-        with st.spinner("Fetching data..."):
-            financials, valuations = get_financials_for_multiple(ticker_input)
-            st.session_state['financial_data'] = financials
-
-            for ticker, data in financials.items():
-                if isinstance(data, str):  # Handle error messages
-                    st.error(f"{ticker}: {data}")
-                else:
-                    st.subheader(f"Quarterly Profit & Loss Statement for {ticker}")
-
-                    # Format the DataFrame for display
-                    formatted_data = data.applymap(lambda x: format_number(x) if isinstance(x, (int, float)) else x)
-                    
-                    st.dataframe(formatted_data.style.set_properties(
-                        **{'background-color': 'lightcyan', 'color': 'black', 'border-color': 'gray', 'font-size': '14px'}
-                    ))
-
-                    st.subheader(f"Valuation Metrics for {ticker}")
-                    valuation_df = pd.DataFrame(valuations[ticker], index=[ticker])
-                    # Format valuation metrics
-                    valuation_df = valuation_df.applymap(lambda x: format_number(x) if isinstance(x, (int, float)) else x)
-                    st.table(valuation_df)
-
-                    if st.button(f"Visualize {ticker} Financials Over Time", key=f"visualize_{ticker}"):
-                        st.session_state['selected_ticker'] = ticker
-                        st.session_state['plot_data'] = data
-
-    if 'plot_data' in st.session_state:
-        st.subheader(f"Visualization for {st.session_state['selected_ticker']}")
-        plot_financials(st.session_state['plot_data'], st.session_state['selected_ticker'])
-
-p_and_l_page()
