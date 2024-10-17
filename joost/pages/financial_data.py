@@ -37,18 +37,20 @@ if st.button("Get Data"):
             stock = yf.Ticker(ticker)
             financials = stock.quarterly_financials.T
             
-            # Collect specified financial metrics
-            filtered_data = pd.DataFrame({
-                "Revenue": financials.get("Total Revenue", [f"Metric not found"] * len(financials.index)),
-                "COGS": financials.get("Cost Of Revenue", [f"Metric not found"] * len(financials.index)),
-                "Net Income": financials.get("Net Income", [f"Metric not found"] * len(financials.index))
-            })
+            # Check if the required metrics exist in the DataFrame
+            if not financials.empty:
+                # Create the DataFrame while safely retrieving metrics
+                filtered_data = pd.DataFrame({
+                    "Revenue": financials.get("Total Revenue", pd.Series([None] * len(financials.index))),
+                    "COGS": financials.get("Cost Of Revenue", pd.Series([None] * len(financials.index))),
+                    "Net Income": financials.get("Net Income", pd.Series([None] * len(financials.index)))
+                }).dropna()  # Drop rows where all values are None
 
-            combined_financials[ticker] = filtered_data
+                combined_financials[ticker] = filtered_data
 
-            # Get the valuation metric
-            pe_ratio = stock.info.get("forwardPE", None)
-            combined_valuations[ticker] = {"P/E Ratio": pe_ratio}
+                # Get the valuation metric
+                pe_ratio = stock.info.get("forwardPE", None)
+                combined_valuations[ticker] = {"P/E Ratio": pe_ratio}
 
         except Exception as e:
             combined_financials[ticker] = f"Error fetching data: {e}"
