@@ -16,13 +16,6 @@ The following metrics will be extracted:
 - **Valuation Metrics**: P/E Ratio
 """)
 
-# Initialize session state variables if they don't exist
-if 'financial_data' not in st.session_state:
-    st.session_state['financial_data'] = {}
-if 'valuation_data' not in st.session_state:
-    st.session_state['valuation_data'] = {}
-
-# Input for stock tickers
 ticker_input = st.text_input("Enter stock ticker symbols (comma-separated, e.g., AAPL, MSFT):", "AAPL")
 
 # Fetch the data when the button is clicked
@@ -37,20 +30,18 @@ if st.button("Get Data"):
             stock = yf.Ticker(ticker)
             financials = stock.quarterly_financials.T
             
-            # Check if the required metrics exist in the DataFrame
-            if not financials.empty:
-                # Create the DataFrame while safely retrieving metrics
-                filtered_data = pd.DataFrame({
-                    "Revenue": financials.get("Total Revenue", pd.Series([None] * len(financials.index))),
-                    "COGS": financials.get("Cost Of Revenue", pd.Series([None] * len(financials.index))),
-                    "Net Income": financials.get("Net Income", pd.Series([None] * len(financials.index)))
-                }).dropna()  # Drop rows where all values are None
+            # Collect specified financial metrics
+            filtered_data = pd.DataFrame({
+                "Revenue": financials.get("Total Revenue", [f"Metric not found"] * len(financials.index)),
+                "COGS": financials.get("Cost Of Revenue", [f"Metric not found"] * len(financials.index)),
+                "Net Income": financials.get("Net Income", [f"Metric not found"] * len(financials.index))
+            })
 
-                combined_financials[ticker] = filtered_data
+            combined_financials[ticker] = filtered_data
 
-                # Get the valuation metric
-                pe_ratio = stock.info.get("forwardPE", None)
-                combined_valuations[ticker] = {"P/E Ratio": pe_ratio}
+            # Get the valuation metric
+            pe_ratio = stock.info.get("forwardPE", None)
+            combined_valuations[ticker] = {"P/E Ratio": pe_ratio}
 
         except Exception as e:
             combined_financials[ticker] = f"Error fetching data: {e}"
@@ -61,7 +52,7 @@ if st.button("Get Data"):
     st.session_state['valuation_data'] = combined_valuations
 
 # Display the financial data if it's available
-if st.session_state['financial_data']:
+if 'financial_data' in st.session_state:
     financials = st.session_state['financial_data']
     valuations = st.session_state['valuation_data']
 
