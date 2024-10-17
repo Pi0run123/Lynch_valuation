@@ -129,16 +129,15 @@ def p_and_l_page():
                     valuation_df = pd.DataFrame(valuations[ticker], index=[ticker])
                     st.table(valuation_df)
 
-                    # Button for visualization
+                    # Add a button to select the ticker for visualization
                     if st.button(f"Visualize {ticker} Financials Over Time", key=f"visualize_{ticker}"):
                         st.session_state['selected_ticker'] = ticker
+                        st.session_state['plot_data'] = data
 
-    # Check if data is available for visualization
-    if 'financial_data' in st.session_state and 'selected_ticker' in st.session_state:
-        ticker = st.session_state['selected_ticker']
-        financial_data = st.session_state['financial_data'][ticker]
-        st.subheader(f"Visualization for {ticker}")
-        plot_financials(financial_data, ticker)
+    # Plotting section
+    if 'plot_data' in st.session_state:
+        st.subheader(f"Visualization for {st.session_state['selected_ticker']}")
+        plot_financials(st.session_state['plot_data'], st.session_state['selected_ticker'])
 
 # Run the page function
 p_and_l_page()
