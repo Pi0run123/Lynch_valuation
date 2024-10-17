@@ -6,7 +6,7 @@ from datetime import date
 # Theme handling
 IS_DARK_THEME = True
 
-st.title("Stock Chart")
+st.title("Stock Analysis: Cumulative Returns and Volatility")
 st.write("Provide information to show the chart")
 
 # User input for stock ticker, start date, and end date
@@ -28,13 +28,38 @@ if st.button("Submit"):
             if data.empty:
                 st.error(f"No data found for ticker symbols {assets} within the given date range.")
             else:
-                # If multiple stocks, the 'Close' prices will have multiple columns (one for each ticker)
-                close_data = data['Close']
-                close_data = close_data.reset_index().melt(id_vars='Date', var_name='Ticker', value_name='Close')
+                # -----------------------------
+                # Cumulative Percentage Change
+                # -----------------------------
+                st.write("### Cumulative Percentage Change")
 
-                # Plotly Express line chart
-                fig = px.line(close_data, x='Date', y='Close', color='Ticker', title=f'Closing Prices for {assets}')
-                st.plotly_chart(fig)
+                close_data = data['Close'].pct_change()  # Daily percentage change
+                cumulative_data = (1 + close_data).cumprod() - 1  # Cumulative return
+
+                # Convert cumulative returns to percentages
+                cumulative_data = cumulative_data * 100
+                cumulative_data = cumulative_data.reset_index().melt(id_vars='Date', var_name='Ticker', value_name='Cumulative Percentage Change')
+
+                # Plotly Express line chart for cumulative percentage change
+                fig_cumulative = px.line(cumulative_data, x='Date', y='Cumulative Percentage Change', color='Ticker', 
+                                         title=f'Cumulative Percentage Change for {assets}')
+                st.plotly_chart(fig_cumulative)
+
+                # -----------------------------
+                # Standard Deviation (Volatility)
+                # -----------------------------
+                st.write("### Volatility (Rolling Standard Deviation)")
+
+                # Calculate rolling standard deviation for the closing prices (20-day window)
+                rolling_std_data = data['Close'].rolling(window=20).std()
+
+                # Reset index and reshape the data for Plotly
+                rolling_std_data = rolling_std_data.reset_index().melt(id_vars='Date', var_name='Ticker', value_name='Standard Deviation')
+
+                # Plotly Express line chart for rolling standard deviation
+                fig_std_dev = px.line(rolling_std_data, x='Date', y='Standard Deviation', color='Ticker', 
+                                      title=f'Rolling 20-Day Standard Deviation for {assets} (Volatility)')
+                st.plotly_chart(fig_std_dev)
 
         except Exception as e:
             st.error(f"An unexpected error occurred: {str(e)}")
