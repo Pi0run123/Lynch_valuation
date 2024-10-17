@@ -3,81 +3,56 @@ import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Function to fetch financial data for a stock (Quarterly)
 def get_financials(ticker):
     stock = yf.Ticker(ticker)
     financials = stock.quarterly_financials.T
 
-    # Filter for specific P&L metrics
     metrics = {
         "Revenue": "Total Revenue",
-        "COGS": "Cost Of Revenue",  # Could be "Cost of Goods Sold"
-        "EBIT": "Ebit",            # Earnings Before Interest and Taxes
+        "COGS": "Cost Of Revenue",
+        "EBIT": "Ebit",
         "Net Income": "Net Income",
         "R&D": "Research Development",
         "S&GA": "Selling General Administrative Expense"
     }
 
-    filtered_data = pd.DataFrame()
+    filtered_data = {metric: financials.get(column, [f"Metric '{column}' not found"] * len(financials.index))
+                     for metric, column in metrics.items()}
 
-    for metric, column in metrics.items():
-        if column in financials.columns:
-            filtered_data[metric] = financials[column]
-        else:
-            filtered_data[metric] = [f"Metric '{column}' not found"] * len(financials.index)
-
-    # Calculate EBITDA if possible
     if "Ebit" in financials.columns and "Depreciation" in stock.cashflow.columns:
-        # Ensure both have the same index length before adding them
         if len(financials["Ebit"]) == len(stock.cashflow.loc["Depreciation"]):
-            ebitda = financials["Ebit"] + stock.cashflow.loc["Depreciation"]
-            filtered_data["EBITDA"] = ebitda
+            filtered_data["EBITDA"] = financials["Ebit"] + stock.cashflow.loc["Depreciation"]
         else:
-            filtered_data["EBITDA"] = [f"EBITDA could not be calculated (length mismatch)"] * len(financials.index)
+            filtered_data["EBITDA"] = [f"EBITDA calculation error (length mismatch)"] * len(financials.index)
     else:
         filtered_data["EBITDA"] = [f"EBITDA could not be calculated"] * len(financials.index)
 
-    return filtered_data
+    return pd.DataFrame(filtered_data)
 
-# Function to calculate P/E Ratio
 def get_valuation_metrics(ticker):
     stock = yf.Ticker(ticker)
-    pe_ratio = stock.info.get("forwardPE", None)
+    return {"P/E Ratio": stock.info.get("forwardPE", None)}
 
-    return {
-        "P/E Ratio": pe_ratio
-    }
-
-# Function to fetch financials for multiple tickers (Quarterly)
 def get_financials_for_multiple(tickers):
     ticker_list = [t.strip().upper() for t in tickers.split(',')]
-    combined_financials = {}
-    combined_valuations = {}
+    combined_financials, combined_valuations = {}, {}
 
     for ticker in ticker_list:
         try:
-            financial_data = get_financials(ticker)
-            valuation_data = get_valuation_metrics(ticker)
-
-            if not financial_data.empty:
-                combined_financials[ticker] = financial_data
-                combined_valuations[ticker] = valuation_data
+            combined_financials[ticker] = get_financials(ticker)
+            combined_valuations[ticker] = get_valuation_metrics(ticker)
         except Exception as e:
             combined_financials[ticker] = f"Error fetching data: {e}"
             combined_valuations[ticker] = f"Error fetching data: {e}"
 
     return combined_financials, combined_valuations
 
-# Function to visualize financial data over time
+# Plot financial data over time
 def plot_financials(financials, ticker):
     plt.figure(figsize=(10, 6))
-
-    if "Revenue" in financials.columns:
-        plt.plot(financials.index, financials["Revenue"], label="Revenue", marker="o")
-    if "EBITDA" in financials.columns:
-        plt.plot(financials.index, financials["EBITDA"], label="EBITDA", marker="o")
-    if "EBIT" in financials.columns:
-        plt.plot(financials.index, financials["EBIT"], label="EBIT", marker="o")
+    for metric in ["Revenue", "EBITDA", "EBIT"]:
+        if metric in financials.columns:
+            plt.plot(financials.index, financials[metric], label=metric, marker="o")
 
     plt.title(f"Quarterly Financial Data for {ticker}")
     plt.xlabel("Quarter")
@@ -86,7 +61,7 @@ def plot_financials(financials, ticker):
     plt.legend()
     st.pyplot(plt)
 
-# Page for fetching financial P&L statements and valuation metrics
+# Main page for financial dashboard
 def p_and_l_page():
     st.title("Quarterly Financial P&L and Valuation Dashboard")
     st.write("""
@@ -96,48 +71,34 @@ def p_and_l_page():
     - **Valuation Metrics**: P/E Ratio
     """)
 
-    # Create a text input box for ticker symbols
-    st.subheader("Input Ticker Symbols")
-    ticker_input = st.text_input("Enter stock ticker symbols (comma-separated, e.g., AAPL, MSFT, TSLA):", "AAPL")
+    ticker_input = st.text_input("Enter stock ticker symbols (comma-separated, e.g., AAPL, MSFT):", "AAPL")
 
-    # Button to fetch data
     if st.button("Get Data"):
         with st.spinner("Fetching data..."):
-            # Fetch financial and valuation data for the entered tickers
             financials, valuations = get_financials_for_multiple(ticker_input)
-
-            # Store data in session state for visualization later
             st.session_state['financial_data'] = financials
 
-            # Display financial data for each stock
             for ticker, data in financials.items():
-                if isinstance(data, str):  # If there is an error message
+                if isinstance(data, str):  # Handle error messages
                     st.error(f"{ticker}: {data}")
                 else:
                     st.subheader(f"Quarterly Profit & Loss Statement for {ticker}")
-                    # Display the financial data in a styled table
-                    st.dataframe(data.style.format(precision=2, na_rep='N/A').set_properties(**{
-                        'background-color': 'lightcyan',
-                        'color': 'black',
-                        'border-color': 'gray',
-                        'font-size': '14px'
-                    }))
-                    st.write("\n")
+                    st.dataframe(data.style.format(precision=2, na_rep='N/A').set_properties(
+                        **{'background-color': 'lightcyan', 'color': 'black', 'border-color': 'gray', 'font-size': '14px'}
+                    ))
 
-                    # Show valuation metrics in a separate table
                     st.subheader(f"Valuation Metrics for {ticker}")
                     valuation_df = pd.DataFrame(valuations[ticker], index=[ticker])
                     st.table(valuation_df)
 
-                    # Add a button to select the ticker for visualization
                     if st.button(f"Visualize {ticker} Financials Over Time", key=f"visualize_{ticker}"):
                         st.session_state['selected_ticker'] = ticker
                         st.session_state['plot_data'] = data
 
-    # Plotting section
+    # Visualization section
     if 'plot_data' in st.session_state:
         st.subheader(f"Visualization for {st.session_state['selected_ticker']}")
         plot_financials(st.session_state['plot_data'], st.session_state['selected_ticker'])
 
-# Run the page function
+# Run the application
 p_and_l_page()
