@@ -37,15 +37,9 @@ def get_financials(ticker):
     else:
         filtered_data["EBITDA"] = [f"EBITDA could not be calculated"] * len(financials.index)
 
-    # Calculate Revenue Growth (Quarter-over-Quarter)
-    if "Total Revenue" in financials.columns:
-        filtered_data["Revenue Growth (%)"] = financials["Total Revenue"].pct_change() * 100
-    else:
-        filtered_data["Revenue Growth (%)"] = ["N/A"] * len(financials.index)
-
     return filtered_data
 
-# Function to calculate valuation metrics: P/E only
+# Function to calculate P/E Ratio
 def get_valuation_metrics(ticker):
     stock = yf.Ticker(ticker)
     pe_ratio = stock.info.get("forwardPE", None)
@@ -98,7 +92,7 @@ def p_and_l_page():
     st.write("""
     Use this page to fetch key financial metrics (P&L) and valuation ratios for selected stocks using Yahoo Finance (yFinance).
     The following metrics will be extracted:
-    - **P&L Metrics**: Revenue, COGS, EBITDA, EBIT, Net Income, R&D, S&GA, Revenue Growth (Quarterly)
+    - **P&L Metrics**: Revenue, COGS, EBITDA, EBIT, Net Income, R&D, S&GA
     - **Valuation Metrics**: P/E Ratio
     """)
 
@@ -106,7 +100,7 @@ def p_and_l_page():
     st.subheader("Input Ticker Symbols")
     ticker_input = st.text_input("Enter stock ticker symbols (comma-separated, e.g., AAPL, MSFT, TSLA):", "AAPL")
 
-    # Create a button to trigger data fetching
+    # Button to fetch data
     if st.button("Get Data"):
         with st.spinner("Fetching data..."):
             # Fetch financial and valuation data for the entered tickers
@@ -135,9 +129,16 @@ def p_and_l_page():
                     valuation_df = pd.DataFrame(valuations[ticker], index=[ticker])
                     st.table(valuation_df)
 
-                    # Add button to visualize financial data over time
-                    if st.button(f"Visualize {ticker} Financials Over Time"):
-                        plot_financials(data, ticker)
+                    # Button for visualization
+                    if st.button(f"Visualize {ticker} Financials Over Time", key=f"visualize_{ticker}"):
+                        st.session_state['selected_ticker'] = ticker
+
+    # Check if data is available for visualization
+    if 'financial_data' in st.session_state and 'selected_ticker' in st.session_state:
+        ticker = st.session_state['selected_ticker']
+        financial_data = st.session_state['financial_data'][ticker]
+        st.subheader(f"Visualization for {ticker}")
+        plot_financials(financial_data, ticker)
 
 # Run the page function
 p_and_l_page()
