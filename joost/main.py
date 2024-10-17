@@ -29,7 +29,7 @@ chart = st.Page(
 )
 
 financial_data = st.Page(
-    page = "pages/financia_data.py",
+    page = "pages/financial_data.py",
     title = "Profit & Loss"
 )
 
