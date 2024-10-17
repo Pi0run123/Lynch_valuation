@@ -16,6 +16,13 @@ The following metrics will be extracted:
 - **Valuation Metrics**: P/E Ratio
 """)
 
+# Initialize session state variables if they don't exist
+if 'financial_data' not in st.session_state:
+    st.session_state['financial_data'] = {}
+if 'valuation_data' not in st.session_state:
+    st.session_state['valuation_data'] = {}
+
+# Input for stock tickers
 ticker_input = st.text_input("Enter stock ticker symbols (comma-separated, e.g., AAPL, MSFT):", "AAPL")
 
 # Fetch the data when the button is clicked
@@ -52,7 +59,7 @@ if st.button("Get Data"):
     st.session_state['valuation_data'] = combined_valuations
 
 # Display the financial data if it's available
-if 'financial_data' in st.session_state:
+if st.session_state['financial_data']:
     financials = st.session_state['financial_data']
     valuations = st.session_state['valuation_data']
 
